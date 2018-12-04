@@ -65,7 +65,7 @@
     </sui-grid-column>
 
     <sui-grid-column :class="exampleClass">
-      <div ref="compiled" :is="compiled" />
+      <renderer :scope="scope" :value="text" />
     </sui-grid-column>
 
     <sui-grid-column v-if="showCode">
@@ -93,30 +93,32 @@
           </a>
         </sui-menu>
       </sui-divider>
-      <editor v-model="source" />
+      <editor v-model="text" />
     </sui-grid-column>
 
     <sui-grid-column v-if="showHtml">
       <sui-divider horizontal>rendered html</sui-divider>
-      <editor :value="rendered" readonly />
     </sui-grid-column>
   </sui-grid>
 </template>
 
 <script>
+/* eslint-disable */
 import upperFirst from 'lodash/upperFirst';
 import camelCase from 'lodash/camelCase';
 import kebabCase from 'lodash/kebabCase';
 import { html } from 'js-beautify';
 import copyToClipboard from 'copy-to-clipboard';
-import Editor from './Editor';
+import * as SemanticUIVue from 'src';
+import Editor from './Playground/Editor';
+import Renderer from './Playground/Renderer';
 import getComponentFromString from './getComponentFromString';
 
 const parser = require('vue-loader/lib/parser');
 
 export default {
   name: 'Example',
-  components: { Editor },
+  components: { Editor, Renderer },
   props: {
     title: String,
     description: String,
@@ -126,88 +128,18 @@ export default {
   },
   data() {
     return {
+      text: this.component,
+      containerClass: '',
+      copied: false,
+      kebabCase() {},
+      link: '',
       showCode: false,
       showHtml: false,
-      exampleClass: `example-${Math.random().toString().slice(-5)}`,
-      source: '',
-      rendered: '',
-      copied: false,
-    };
-  },
-  computed: {
-    codeColor() {
-      return this.showCode ? undefined : 'grey';
-    },
-    htmlColor() {
-      return this.showHtml ? undefined : 'grey';
-    },
-    containerClass() {
-      return this.showCode || this.showHtml ?
-        'example-container active' :
-        'example-container';
-    },
-    compiled() {
-      return getComponentFromString(this.source, `${upperFirst(camelCase(this.title))}Example`);
-    },
-    link() {
-      const name = this.compiled.name;
-      return `${this.baseUrl}/${name}.example.vue`;
-    },
-  },
-  watch: {
-    compiled() {
-      this.init();
-    },
-    component(value) {
-      this.source = value;
-    },
-  },
-  beforeMount() {
-    this.source = this.component;
-  },
-  mounted() {
-    this.init();
-  },
-  methods: {
-    setStyle() {
-      const parsed = parser(this.source);
-      this.$el.querySelectorAll('style').forEach(s => s.remove());
-      parsed.styles.forEach(({ content }) => {
-        const style = document.createElement('style');
-        this.$el.appendChild(style);
-        style.textContent = content;
-        Object.values(style.sheet.cssRules).forEach((rule) => {
-          rule.selectorText = `.${this.exampleClass} ${rule.selectorText}`; // eslint-disable-line
-        });
-      });
-    },
-    setHtml() {
-      const markup = this.$refs.compiled.$el.outerHTML;
-      const preFormattedHTML = markup
-        .replace(/><(?!\/i|\/label|\/span|option)/g, '>\n<');
-      this.rendered = html(preFormattedHTML, {
-        indent_size: 2,
-        indent_char: ' ',
-        wrap_attributes: 'auto',
-        wrap_attributes_indent_size: 2,
-        end_with_newline: false,
-      });
-    },
-    init() {
-      this.setStyle();
-      this.setHtml();
-    },
-    copySource() {
-      copyToClipboard(this.source);
-      this.copied = true;
-      setTimeout(() => {
-        this.copied = false;
-      }, 1000);
-    },
-    resetSource() {
-      this.source = this.component;
-    },
-    kebabCase,
+      codeColor: 'black',
+      exampleClass: 'example',
+      htmlColor: 'black',
+      scope: { SemanticUIVue },
+    }
   },
 };
 </script>
@@ -238,5 +170,16 @@ export default {
 
 .example-header {
   margin: 0!important;
+}
+</style>
+
+<style>
+.vuep .vuep-editor {
+  display: none;
+}
+
+.vuep .vuep-error,
+.vuep .vuep-preview {
+  width: 100%;
 }
 </style>
