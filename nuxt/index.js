@@ -3,7 +3,7 @@ const { resolve } = require('path');
 module.exports = function nuxtSemanticUIVue(moduleOptions) {
   // Conditionally require semantic-ui original css too if not explicitly disabled
   if (moduleOptions.css !== false) {
-    this.options.css.unshift('semantic-ui-css/semantic.min.css');
+    this.options.css.unshift('fomantic-ui-css/semantic.min.css');
   }
 
   // Add vendor
